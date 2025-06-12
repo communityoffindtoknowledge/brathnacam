@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Modern Music Player</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.10.2/lottie.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: radial-gradient(circle at top left, #232526, #414345);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 109vh;
+      margin: 0;
+    }                                                                           
+    #lottie-animation {
+      width: 100%;
+      height: 180px;
+      margin-bottom: 1.5rem;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    h2 {
+      margin: 0.5rem 0 0.2rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: #aaa;
+      font-weight: 400;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-top: 1.8rem;
+    }
+    .controls button {
+      font-size: 1.3rem;
+      padding: 14px;
+      background: #1db954;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      cursor: pointer;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+    .controls button:hover {
+      background: #1ed760;
+      transform: scale(1.1);
+    }
+    .progress-container {
+      position: relative;
+      background: #444;
+      height: 12px;
+      width: 100%;
+      border-radius: 30px;
+      margin-top: 2rem;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, #1db954, #1ed760);
+      border-radius: 30px;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+    .settings, .menu, .search {
+      position: absolute;
+      top: 15px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .settings {
+      right: 15px;
+    }
+    .menu {
+      right: 55px;
+    }
+    .search {
+      right: 95px;
+    }
+    .music-icon {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: default;
+      font-family: 'Times New Roman';
+    }
+    .settings-menu {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 15px;
+      background: #333;
+      border-radius: 10px;
+      padding: 0.5rem;
+      z-index: 10;
+    }
+    .settings-menu button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: block;
+      margin: 0.5rem 0;
+    }
+    .time-display {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #ccc;
+      margin-top: 0.5rem;
+    }
+    #search-box {
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      outline: none;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="player">
+    <button class="music-icon">🎵 BRATHNA</button>
+    <button class="search" onclick="toggleSearch()">🔍</button>
+    <button class="menu" onclick="showPlaylist()">📋</button>
+    <button class="settings" onclick="toggleSettings()">⚙️</button>
+    <div class="settings-menu" id="settings-menu">
+      <button onclick="toggleMute()" id="volume-btn">🔊</button>
+    </div>
+    <input type="text" id="search-box" placeholder="Search songs..." oninput="filterSongs()" />
+    <div id="lottie-animation"></div>
+    <h2 id="title">Loading...</h2>
+    <h3 id="artist">Please wait</h3>
+    <audio id="audio" controls style="display: none;"></audio>
+    <div class="controls">
+      <button id="prev">⏮️</button>
+      <button id="play">▶️</button>
+      <button id="next">⏭️</button>
+    </div>
+    <div class="progress-container" id="progress-container">
+      <div class="progress" id="progress"></div>
+    </div>
+    <div class="time-display">
+      <span id="current-time">0:00</span>
+      <span id="duration">0:00</span>
+    </div>
+  </div>
+
+  <script>
+    const songs = [
+      { title: "End Of Beginning", artist: "Djo", src: "Djo - End Of Beginning (Lyrics).mp3" },
+      { title: "A Thousand Years", artist: "Christina Perri", src: "Christina Perri - A Thousand Years.mp3" },
+      { title: "Set Fire to the Rain", artist: "Adele", src: "Adele - Set Fire to the Rain (Lyrics)  Rihanna, Coldplay (Mix Lyrics).mp3" },
+      { title: "Can We Kiss Forever", artist: "Kina", src: "Kina - Can We Kiss Forever_ (Lyrics) ft. Adriana Proenza.mp3" },
+      { title: "Summertime Sadness", artist: "Lana Del Rey", src: "Lana Del Rey - Summertime Sadness (Lyrics).mp3" },
+      { title: "Young And Beautiful", artist: "Lana Del Rey", src: "Lana Del Rey - Young And Beautiful (Lyrics).mp3" },
+      { title: "Someone You Loved", artist: "Lewis Capaldi", src: "Lewis Capaldi - Someone You Loved (Lyrics)" },
+      { title: "Sped Up Playlist For You", artist: "Sped Up Playlist For You", src: "Sped Up Playlist For You.mp3" },
+      { title: "Камин", artist: "Emin And Jony", src: "Камин (Lyrics) - Emin And Jony.mp3" },
+      { title: "𝖬𝗈𝗋𝗍𝖺𝗅𝗌 𝗑 𝖱𝗈𝗒𝖺𝗅𝗍𝗒 (𝖴𝗅𝗍𝗋𝖺 𝖲𝗅𝗈𝗐𝖾𝖽  𝖱𝖾𝗏𝖾𝗋𝖻)", artist: "𝖬𝗈𝗋𝗍𝖺𝗅𝗌 𝗑 𝖱𝗈𝗒𝖺𝗅𝗍𝗒 (𝖴𝗅𝗍𝗋𝖺 𝖲𝗅𝗈𝗐𝖾𝖽  𝖱𝖾𝗏𝖾𝗋𝖻)", src: "𝖬𝗈𝗋𝗍𝖺𝗅𝗌 𝗑 𝖱𝗈𝗒𝖺𝗅𝗍𝗒 (𝖴𝗅𝗍𝗋𝖺 𝖲𝗅𝗈𝗐𝖾𝖽  𝖱𝖾𝗏𝖾𝗋𝖻).mp3" },
+      { title: "Impossible", artist: "James Arthur", src: "James Arthur - Impossible (Lyrics).mp3" },
+      { title: "Daylight", artist: "David Kushner", src: "David Kushner - Daylight (Lyrics).mp3" },
+      { title: "Funk", artist: "AURA", src: "AURA VIRAL AURA MUSIC PLAYLIST 2025  best for gym,  exercise and dominate the world.mp3" },
+      { title: "3X MEMORY REBOOT", artist: "@NarventMusic, @vojofficial, @VXLLAIN", src: "3X MEMORY REBOOT  @NarventMusic, @vojofficial, @VXLLAIN.MP3.mp3" },
+      { title: "Somewhere Only We Know", artist: "Keane", src: "Keane - Somewhere Only We Know (Lyrics).mp3" },
+      { title: "Heat Waves", artist: "Glass Animals", src: "Glass Animals - Heat Waves (LYRICS).mp3" },
+      { title: "Why Not Me", artist: "Enrique Iglesias", src: "[Lyrics  Vietsub] Why Not Me - Enrique Iglesias.mp3" },
+      { title: "Faded", artist: "Alan Walker", src: "Alan Walker - Faded (Lyrics).mp3" },
+      { title: "Runaway", artist: "AURORA", src: "AURORA - Runaway (Lyrics).mp3" },
+      { title: "Central Cee", artist: "BAND4BAND", src: "Central Cee - BAND4BAND (Lyrics) Ft. Lil Baby.mp3" },
+
+      { title: "Ruth B", artist: "Dandelions", src: "Dandelions - Ruth B. [Lyrics]  Shawn Mendes, Ellie Goulding, Calvin Harris.mp3" },
+      { title: "Alan Walker", artist: "Darkside", src: "Darkside - Alan Walker (Lyrics)  Faded, Alone, Play, ....mp3" },
+      { title: "Central Cee", artist: "Doja", src: "Central Cee - Doja (Official Music Video).mp3" },
+      { title: "Demi Lovato", artist: "Heart Attack", src: "Demi Lovato - Heart Attack (Lyrics).mp3" },
+      { title: "I'll die with a smile", artist: "DIE WITH A SMILE", src: "DIE WITH A SMILE - I'll die with a smile@7clouds.mp3" },
+      { title: "Ed Sheeran", artist: "Perfect", src: "Ed Sheeran - Perfect (Lyrics)  John Legend, Lewis Capaldi, Ali Gatie, (Mx).mp3" },
+      { title: "Funk", artist: "PSL", src: "PSL (Slowed).mp3" },
+      { title: "Wiz Khalifa", artist: "See You Agai", src: "See You Again - Wiz Khalifa (Lyrics) Ft Charlie Puth  Christina Perri, Ellie Goulding,... (Mix).mp3" },
+      { title: "Xxxtentacion", artist: "Hope", src: "Hope.mp3" },
+      { title: "Katie Sky", artist: "Monsters", src: "Katie Sky - Monsters (Lyrics).mp3" },
+      { title: "Khalid", artist: "Young Dumb & Broke", src: "Khalid - Young Dumb & Broke (Lyrics).mp3" },
+      { title: "Vicetone feat", artist: "Nevada", src: "Nevada(lyrics) - Vicetone feat. cozi zuehlsdorff (Slowed & Reverb) (1).mp3" },
+      { title: "Powfu", artist: "death bed", src: "Powfu - death bed (coffee for your head) (Lyrics) ft. beabadoobee.mp3" },
+      { title: "Michael Learns To Rock", artist: "Take Me to Your Heart ", src: "Take Me to Your Heart - Michael Learns To Rock ( Video Lyrics Official).mp3" },
+      { title: "SLANDER", artist: "Love is Gone", src: "SLANDER - Love is Gone (Lyrics) ft. Dylan Matthew (Acoustic) I'm sorry don't leave me.mp3" },
+      { title: "The Weeknd", artist: "Starboy", src: "The Weeknd - Starboy (Lyrics) ft. Daft Punk.mp3" },
+      { title: "Trevor Daniel", artist: "Falling", src: "Trevor Daniel - Falling (Lyrics).mp3" },
+      { title: "Sia", artist: "Unstoppable", src: "Unstoppable - Sia (Lyrics)  Cheap Thrills, Chandelier, Dusk Till Dawn - [MIX LYRICS].mp3" },
+      { title: "XXXTENTACION", artist: "changes", src: "XXXTENTACION - changes.mp3" },
+      { title: "Yung Kai", artist: "Blue", src: "Yung Kai - Blue (Lyrics) (Loop Video).mp3" },
+      { title: "ZAYN & Sia", artist: "Dusk Till Dawn", src: "ZAYN & Sia - Dusk Till Dawn (Lyrics).mp3" },
+      { title: "Issam Alnajja", artist: "Hadal Ahbek", src: "Issam Alnajjar - Hadal Ahbek (Performance Video).mp3" },
+      { title: "XXXTENTACION ", artist: "Nightmares", src: "XXXTENTACION - Everybody Dies In Their Nightmares (Lyrics).mp3" },
+      { title: "5ive", artist: "Me And My Brother", src: "5ive - Me And My Brother.mp3" },
+      { title: "Akon", artist: "Right Now Na Na Na", src: "Akon - Right Now Na Na Na (Lyrics).mp3" },
+      { title: "Akon", artist: "Smack That", src: "Akon, Eminem - Smack That (Lyrics).mp3" },
+      { title: "Chord Overstreet", artist: "Hold On", src: "Chord Overstreet - Hold On (Lyrics).mp3" },
+      { title: "DJ BREAKBEAT", artist: "DJ BREAKBEAT DESPACITO X TREND ORANG LAIN", src: "DJ BREAKBEAT DESPACITO X TREND ORANG LAIN VS ME SLOWED REMIX VIRAL TIKTOK TERBARU 2023 Fesanz Jockey.mp3" },
+      { title: "DJ CIS CIS FAJA SKALI X DOLA DOLA KITA", artist: "DJ CIS CIS FAJA SKALI X DOLA DOLA KITA", src: "DJ CIS CIS FAJA SKALI X DOLA DOLA KITA SALAH DOLA VIRAL TIKTOK FULL SONG MAMAN FVNDY 2024.mp3" },
+      { title: "DJ LAGI", artist: "DJ LAGI TAMVAN X NINIX TITANIC", src: "DJ LAGI TAMVAN X NINIX TITANIC I DJ GOYANG DAYUNG MELODI MENGKANE FYP VIRAL TIKTOK 2024 FULL BASS.mp3" },
+      { title: "FIFTY FIFTY", artist: "Cupid", src: "FIFTY FIFTY - Cupid (Twin Version) (Lyrics).mp3" },
+      { title: "MONTAGEM TOMADA", artist: "MONTAGEM TOMADA", src: "MONTAGEM TOMADA - ULTRA SLOWED  REVERB TO PERFECTION (LA VIDA ES UN CARRUSEL FUNK).mp3" },
+
+      { title: "One Direction", artist: "Right Now", src: "One Direction - Right Now (Lyrics).mp3" },
+      { title: "sapientdream", artist: "Past Lives", src: "sapientdream - Past Lives (Lyrics).mp3" },
+      { title: "Tom Odell", artist: "Another Love", src: "Tom Odell - Another Love (Lyrics).mp3" },
+      { title: "Aaron Smith", artist: "Dancin", src: "Aaron Smith - Dancin (KRONO Remix) - Lyrics.mp3" },
+      { title: "Alphaville", artist: "Forever Young", src: "Alphaville - Forever Young (Lyrics).mp3" },
+      { title: "DJ CAMPURAN", artist: "JEDAG JEDUG FULL", src: "DJ CAMPURAN VIRAL TIK TOK 2024 JEDAG JEDUG FULL BASS TERBARU.mp3" },
+      { title: "Eminem", artist: "Mockingbird", src: "Eminem - Mockingbird (Lyrics).mp3" },
+      { title: "everything works out", artist: "everything works out in the end", src: "everything works out in the end (slowed)  [best part looped].mp3" },
+      { title: "Issam Alnajjar", artist: "Hadal Ahbek", src: "Issam Alnajjar - Hadal Ahbek (Performance Video) (1).mp3" },
+      { title: "Lady Gaga, Bruno Mars", artist: "Die With A Smile", src: "Lady Gaga, Bruno Mars - Die With A Smile (Lyrics) مترجمة.mp3" },
+      { title: "Paloma Faith", artist: "Only Love Can Hurt Like This", src: "Paloma Faith - Only Love Can Hurt Like This (Lyrics).mp3" },
+      { title: "RADWIMPS", artist: "Suzume", src: "RADWIMPS - Suzume (Lyrics) ft. Toaka.mp3" },
+      { title: "Rosa Linn", artist: "SNAP", src: "Rosa Linn - SNAP (Lyrics).mp3" },
+ 
+
+
+    ];
+
+    let songIndex = 0;
+    let isPlaying = false;
+    let isMuted = false;
+
+    const audio = document.getElementById("audio");
+    const playBtn = document.getElementById("play");
+    const prevBtn = document.getElementById("prev");
+    const nextBtn = document.getElementById("next");
+    const title = document.getElementById("title");
+    const artist = document.getElementById("artist");
+    const progressContainer = document.getElementById("progress-container");
+    const progress = document.getElementById("progress");
+    const volumeBtn = document.getElementById("volume-btn");
+    const settingsMenu = document.getElementById("settings-menu");
+    const currentTimeEl = document.getElementById("current-time");
+    const durationEl = document.getElementById("duration");
+    const searchBox = document.getElementById("search-box");
+
+    const lottiePlayer = lottie.loadAnimation({
+      container: document.getElementById('lottie-animation'),
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'https://assets1.lottiefiles.com/packages/lf20_j1adxtyb.json'
+    });
+
+    function loadSong(song) {
+      title.textContent = song.title;
+      artist.textContent = song.artist;
+      audio.src = song.src;
+    }
+
+    function playSong() {
+      audio.play();
+      playBtn.textContent = "⏸️";
+      isPlaying = true;
+    }
+
+    function pauseSong() {
+      audio.pause();
+      playBtn.textContent = "▶️";
+      isPlaying = false;
+    }
+
+    function togglePlay() {
+      isPlaying ? pauseSong() : playSong();
+    }
+
+    function prevSong() {
+      songIndex = (songIndex - 1 + songs.length) % songs.length;
+      loadSong(songs[songIndex]);
+      playSong();
+    }
+
+    function nextSong() {
+      songIndex = (songIndex + 1) % songs.length;
+      loadSong(songs[songIndex]);
+      playSong();
+    }
+
+    function updateProgress(e) {
+      const { duration, currentTime } = e.srcElement;
+      const percent = (currentTime / duration) * 100;
+      progress.style.width = `${percent}%`;
+      currentTimeEl.textContent = formatTime(currentTime);
+      durationEl.textContent = isNaN(duration) ? "0:00" : formatTime(duration);
+    }
+
+    function formatTime(time) {
+      const minutes = Math.floor(time / 60);
+      const seconds = Math.floor(time % 60);
+      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    }
+
+    function setProgress(e) {
+      const width = this.clientWidth;
+      const clickX = e.offsetX;
+      const duration = audio.duration;
+      audio.currentTime = (clickX / width) * duration;
+    }
+
+    function toggleSettings() {
+      settingsMenu.style.display = settingsMenu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      audio.muted = isMuted;
+      volumeBtn.textContent = isMuted ? '🔇' : '🔊';
+    }
+
+    function toggleSearch() {
+      searchBox.style.display = searchBox.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function filterSongs() {
+      const query = searchBox.value.toLowerCase();
+      const foundIndex = songs.findIndex(song => song.title.toLowerCase().includes(query));
+      if (foundIndex !== -1) {
+        songIndex = foundIndex;
+        loadSong(songs[songIndex]);
+        playSong();
+      }
+    }
+
+    function showPlaylist() {
+      let playlistString = songs.map((song, index) => `${index + 1}. ${song.title} - ${song.artist}`).join('\n');
+      alert("Playlist:\n" + playlistString);
+    }
+
+    playBtn.addEventListener("click", togglePlay);
+    prevBtn.addEventListener("click", prevSong);
+    nextBtn.addEventListener("click", nextSong);
+    audio.addEventListener("timeupdate", updateProgress);
+    progressContainer.addEventListener("click", setProgress);
+    audio.addEventListener("ended", nextSong);
+
+    loadSong(songs[songIndex]);
+  </script>
+</body>
+</html>
